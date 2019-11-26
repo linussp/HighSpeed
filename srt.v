@@ -1,9 +1,9 @@
 module srt(
 	input clk, resetn, start,
-	input [5:0] N,
-	input [5:0] D,
-	output [5:0] Q,
-	output [3:0] R
+	input [7:0] N,
+	input [7:0] D,
+	output [7:0] Q,
+	output [7:0] R
 );
 
 parameter IDLE   = 2'b00,
@@ -16,11 +16,11 @@ reg [7:0] count;  // in case we want to increase digit
 reg incr_count;
 reg doneq, shiftq, loadP;
 
-wire [8:0] P, P4;
-wire [2:0] q; //from 1 time select table
-wire [8:0] qd; //product 
-wire [8:0] newP; //after sub
-wire [8:0] P_reg; //after register 
+wire [9:0] P, P4;
+wire [1:0] q; //from 1 time select table
+wire [9:0] qd; //product 
+wire [9:0] newP; //after sub
+wire [9:0] P_reg; //after register 
 
 
 
@@ -52,7 +52,7 @@ always @(state, count)begin
 			incr_count = 1'b1;
 			shiftq = 1'b1;
 
-			if (count == 8'h02) next_state = STOP;
+			if (count == 8'h03) next_state = STOP;
 			else next_state = CALC_2; 
 		end
 		STOP: begin
@@ -73,7 +73,7 @@ always @(posedge clk)begin
 end
 
 mux2 p1(
-	.input0({3'b000,N}),  // not sure 3'b000 or should be 2'b00
+	.input0({2'b00,N}),  // not sure 3'b000 or should be 2'b00
 	.input1(P_reg),
 	.select(loadP),
 	.data_out(P)
@@ -83,8 +83,8 @@ mux2 p1(
 assign P4 = P << 2;
 
 q_select qst(
-	.D(D[5:2]),
-	.P4(P4),
+	.D(D[7:4]),
+	.P4(P4[9:5]),
 	.q(q)
 	);
 
@@ -94,11 +94,11 @@ shift_reg qreg(
 	.q(q),
 	.shift(shiftq),
 	.done(doneq),
-	.q_radix4(q_radix4)
+	.Q(Q)
 	);
 
 product prod(
-	.d({3'b000, D}),
+	.d({2'b00, D}),
 	.q(q),
 	.qd(qd)
 	);
@@ -122,9 +122,9 @@ endmodule
 
 //mux for partial remainder 
 module mux2(input0, input1, select, data_out);
-	input [8:0] input0, input1; 
+	input [9:0] input0, input1; 
 	input select;
-	output [8:0] data_out;
+	output [9:0] data_out;
 
 	assign data_out = select? input1 : input0;
 endmodule
@@ -132,51 +132,50 @@ endmodule
 //q selection table 
 module q_select(D, P4, q);
 input [3:0] D;
-input [8:0] P4;
-output [2:0] q;
+input [4:0] P4; //5 msb P4[9:5]
+output [1:0] q;
 
 
 reg [14:0] temp_row;
 
 	always @(P4)begin
 		case(P4)
-			9'b000_000_000: temp_row = 15'b000_000_000_000_000;
-			9'b000_000_001: temp_row = 15'b000_000_000_000_000;
-			9'b000_000_010: temp_row = 15'b000_000_000_000_000;
-			9'b000_000_011: temp_row = 15'b000_000_000_000_000;
-			9'b000_000_100: temp_row = 15'b001_000_000_000_000;
-			9'b000_000_101: temp_row = 15'b001_001_000_000_000;
-			9'b000_000_110: temp_row = 15'b001_001_001_000_000;
-			9'b000_000_111: temp_row = 15'b001_001_001_001_000;
+			5'b00_000: temp_row = 15'b000_000_000_000_000;
+			5'b00_001: temp_row = 15'b000_000_000_000_000;
+			5'b00_010: temp_row = 15'b000_000_000_000_000;
+			5'b00_011: temp_row = 15'b000_000_000_000_000;
+			5'b00_100: temp_row = 15'b001_000_000_000_000;
+			5'b00_101: temp_row = 15'b001_001_000_000_000;
+			5'b00_110: temp_row = 15'b001_001_001_000_000;
+			5'b00_111: temp_row = 15'b001_001_001_001_000;
 
-			9'b000_001_000: temp_row = 15'b010_001_001_001_001;
-			9'b000_001_001: temp_row = 15'b010_001_001_001_001;
-			9'b000_001_010: temp_row = 15'b010_010_001_001_001;
-			9'b000_001_011: temp_row = 15'b010_010_001_001_001;
-			9'b000_001_100: temp_row = 15'b011_010_010_001_001;
-			9'b000_001_101: temp_row = 15'b011_010_010_001_001;
-			9'b000_001_110: temp_row = 15'b011_010_010_010_001;
-			9'b000_001_111: temp_row = 15'b011_011_010_010_001;
+			5'b01_000: temp_row = 15'b010_001_001_001_001;
+			5'b01_001: temp_row = 15'b010_001_001_001_001;
+			5'b01_010: temp_row = 15'b010_010_001_001_001;
+			5'b01_011: temp_row = 15'b010_010_001_001_001;
+			5'b01_100: temp_row = 15'b011_010_010_001_001;
+			5'b01_101: temp_row = 15'b011_010_010_001_001;
+			5'b01_110: temp_row = 15'b011_010_010_010_001;
+			5'b01_111: temp_row = 15'b011_011_010_010_001;
 
-			9'b000_010_000: temp_row = 15'bxxx_011_010_010_010;
-			9'b000_010_001: temp_row = 15'bxxx_011_010_010_010;
-			9'b000_010_010: temp_row = 15'bxxx_011_011_010_010;
-			9'b000_010_011: temp_row = 15'bxxx_011_011_010_010;
-			9'b000_010_100: temp_row = 15'bxxx_xxx_011_010_010;
-			9'b000_010_101: temp_row = 15'bxxx_xxx_011_011_010;
-			9'b000_010_110: temp_row = 15'bxxx_xxx_011_011_010;
-			9'b000_010_111: temp_row = 15'bxxx_xxx_011_011_010;
+			5'b10_000: temp_row = 15'bxxx_011_010_010_010;
+			5'b10_001: temp_row = 15'bxxx_011_010_010_010;
+			5'b10_010: temp_row = 15'bxxx_011_011_010_010;
+			5'b10_011: temp_row = 15'bxxx_011_011_010_010;
+			5'b10_100: temp_row = 15'bxxx_xxx_011_010_010;
+			5'b10_101: temp_row = 15'bxxx_xxx_011_011_010;
+			5'b10_110: temp_row = 15'bxxx_xxx_011_011_010;
+			5'b10_111: temp_row = 15'bxxx_xxx_011_011_010;
 
-			9'b000_011_000: temp_row = 15'bxxx_xxx_xxx_011_011;
-			9'b000_011_001: temp_row = 15'bxxx_xxx_xxx_011_011;
-			9'b000_011_010: temp_row = 15'bxxx_xxx_xxx_011_011;
-			9'b000_011_011: temp_row = 15'bxxx_xxx_xxx_011_011;
-			9'b000_011_100: temp_row = 15'bxxx_xxx_xxx_xxx_011;
-			9'b000_011_101: temp_row = 15'bxxx_xxx_xxx_xxx_011;
-			9'b000_011_110: temp_row = 15'bxxx_xxx_xxx_xxx_011;
-			9'b000_011_111: temp_row = 15'bxxx_xxx_xxx_xxx_011;
-			9'b000_100_000: temp_row = 15'bxxx_xxx_xxx_xxx_xxx;
-			default: temp_row = 15'b000_000_000_000_000;
+			5'b11_000: temp_row = 15'bxxx_xxx_xxx_011_011;
+			5'b11_001: temp_row = 15'bxxx_xxx_xxx_011_011;
+			5'b11_010: temp_row = 15'bxxx_xxx_xxx_011_011;
+			5'b11_011: temp_row = 15'bxxx_xxx_xxx_011_011;
+			5'b11_100: temp_row = 15'bxxx_xxx_xxx_xxx_011;
+			5'b11_101: temp_row = 15'bxxx_xxx_xxx_xxx_011;
+			5'b11_110: temp_row = 15'bxxx_xxx_xxx_xxx_011;
+			5'b11_111: temp_row = 15'bxxx_xxx_xxx_xxx_011;
+			default:   temp_row = 15'b000_000_000_000_000;
 	end
 
 	always @(d, temp_row) begin
@@ -191,13 +190,13 @@ reg [14:0] temp_row;
 endmodule
 
 //shift register 
-module shift_reg(clk, resetn, q, shift, done, q_radix4);
+module shift_reg(clk, resetn, q, shift, done, Q);
 	input clk, resetn;
-	input [2:0] q;
+	input [1:0] q;
 	input shift, done;
-	output [8:0] q_radix4;
+	output [7:0] Q;
 
-	reg [8:0] temp;
+	reg [7:0] temp;
 
 	always @(posedge clk) begin
 		if (!resetn) begin
@@ -209,33 +208,33 @@ module shift_reg(clk, resetn, q, shift, done, q_radix4);
 		end
 	end
 
-	assign q_radix4 = done? temp : 'hz;
+	assign Q = done? temp : 'hz;
 
 endmodule
 
 //product
 module product(d, q, qd);
-	input [8:0]d;
-	input [2:0]q;
-	output qd;
+	input [9:0]d;
+	input [1:0]q;
+	output reg[9:0] qd;
 
 	//product
-	reg [8:0] qd;
+	wire [9:0] q2d, q3d, 
+	wire [9:0] q_2d, q_3d;
 
-	wire [8:0] q2d, q_2d, q3d, q_3d;
 
 	assign q2d  = d << 1;
 	assign q3d  = (d << 1) + d;
 
 	always @(q, d)begin
 		case(q)
-			3'b000: qd <= 9'b0;//q=0
-			3'b001: qd <= d;//q=1
-			3'b010: qd <= q2d;//q=2
-			3'b011: qd <= q3d;//q=3
-			3'b111: qd <= ~d + 1'b1;//q=-1
-			3'b110: qd <= ~q2d + 1'b1;//q=-2
-			3'b101: qd <= ~q3d + 1'b1;//q=-3
+			3'b00: qd <= 9'b0;//q=0
+			3'b01: qd <= d;//q=1
+			3'b10: qd <= q2d;//q=2
+			3'b11: qd <= q3d;//q=3
+			//3'b111: qd <= ~d + 1'b1;//q=-1
+			//3'b110: qd <= ~q2d + 1'b1;//q=-2
+			//3'b101: qd <= ~q3d + 1'b1;//q=-3
 		endcase
 	end
 endmodule
@@ -243,35 +242,23 @@ endmodule
 
 //subtractor
 module subtractor(P4, qd, diff);
-input [8:0] P4, qd;
-output [8:0] diff;
+input [9:0] P4, qd;
+output [9:0] diff;
 
 assign diff = P4 - qd;
 
 endmodule
 
-//==================================//
-//	1 BIT FULL SUBTRACTOR	    //
-//==================================//
-
-module fs(input a,b,c, //one bit operands
-	  	  output diff,borr
-	 );
-
-assign diff = a ^ b ^c ;
-assign borr = (~a & b) | (b & c) | (~a & c);
-
-endmodule
 
 
 //register for the result of sub
 module register9(clk, resetn, in, load, data_out);
 input clk, resetn, load;
-input [8:0] in;
-output reg[8:0] data_out;
+input [9:0] in;
+output reg[9:0] data_out;
 
 always @(posedge clk)begin
-	if (!resetn) data_out <= 9'b0;
+	if (!resetn) data_out <= 10'b0;
 	else begin
 		if(load) data_out <= in;
 	end
