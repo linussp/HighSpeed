@@ -174,11 +174,15 @@ reg [26:0] temp_row;
 
 	always @(D, temp_row) begin
 	case (D) 
-		4'b0100 : q = temp_row[14:12];
-		4'b0101 : q = temp_row[11:9];
-		4'b0110 : q = temp_row[8:6];
-		4'b0111 : q = temp_row[5:3];		
-		4'b1000 : q = temp_row[2:0];		
+		4'b01000 : q = temp_row[26:24];
+		4'b01001 : q = temp_row[23:21];
+		4'b01010 : q = temp_row[20:18];
+		4'b01011 : q = temp_row[17:15];		
+		4'b01100 : q = temp_row[14:12];
+		4'b01101 : q = temp_row[11:9];
+		4'b01110 : q = temp_row[8:6];		
+		4'b01111 : q = temp_row[5:3];		
+		4'b10000 : q = temp_row[2:0];		
 	endcase
 	end
 endmodule
