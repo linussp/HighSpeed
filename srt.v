@@ -13,7 +13,6 @@ parameter IDLE   = 2'b00,
 
 reg [1:0] state, next_state;
 reg [7:0] count;  // in case we want to increase digit 
-reg incr_count;
 reg doneq, shiftq, loadP;
 
 wire [9:0] P, P4;
@@ -27,50 +26,43 @@ wire [9:0] P_reg; //after register
 always @(posedge clk) begin
 	if (!resetn) begin
 		// reset
-		incr_count <= 1'b0;
-		state <= IDLE;
-	end
-	else begin
-		state <= next_state;
-	end
-end
-
-always @(state, count)begin
-	case(state)
-		IDLE: begin
-			incr_count = 1'b0;
-			doneq = 1'b0;
-			if(start) next_state = CALC_1;
-		end
-		CALC_1:begin
-			incr_count = 1'b1;
-			shiftq = 1'b1;
-			next_state = CALC_2;
-		end
-		CALC_2: begin
-			loadP = 1'b1;
-			incr_count = 1'b1;
-			shiftq = 1'b1;
-
-			if (count == 8'h03) next_state = STOP;
-			else next_state = CALC_2; 
-		end
-		STOP: begin
-			doneq = 1'b1;
-		end
-		default: next_state = IDLE;
-	endcase	
-end
-
-always @(posedge clk)begin
-	if (!resetn) begin
+		state = IDLE;
 		count = 0;
+		loadP = 1'b0;
+		shiftq = 1'b0;
+		doneq = 1'b0;
 	end
 	else begin
-		if(incr_count) count = count + 1;
-		else count = 0;
+		case(state)
+			IDLE: begin
+				loadP = 1'b0;
+				shiftq = 1'b0;
+				doneq = 1'b0;
+				if(start) state = CALC_1;
+			end
+			CALC_1:begin
+				count = count + 1;
+				shiftq = 1'b1;
+				state = CALC_2;
+				loadP = 1'b1;
+			end
+			CALC_2: begin
+				count = count + 1;
+				shiftq = 1'b1;
+
+				if (count == 8'h04) state = STOP;
+				else state = CALC_2; 
+			end
+			STOP: begin
+				shiftq = 1'b0;
+				doneq = 1'b1;
+			end
+			default: state = IDLE;
+		endcase	
+
 	end
 end
+
 
 mux2 p1(
 	.input0({2'b00,N}),  // not sure 3'b000 or should be 2'b00
@@ -84,7 +76,7 @@ assign P4 = P << 2;
 
 q_select qst(
 	.D(D[7:4]),
-	.P4(P4[9:5]),
+	.P4(P4[9:4]),
 	.q(q)
 	);
 
@@ -132,54 +124,56 @@ endmodule
 //q selection table 
 module q_select(D, P4, q);
 input [3:0] D;
-input [4:0] P4; //5 msb P4[9:5]
-output [1:0] q;
+input [5:0] P4; //6 msb P4[9:4]
+output reg[1:0] q;
 
 
 reg [14:0] temp_row;
 
 	always @(P4)begin
 		case(P4)
-			5'b00_000: temp_row = 15'b000_000_000_000_000;
-			5'b00_001: temp_row = 15'b000_000_000_000_000;
-			5'b00_010: temp_row = 15'b000_000_000_000_000;
-			5'b00_011: temp_row = 15'b000_000_000_000_000;
-			5'b00_100: temp_row = 15'b001_000_000_000_000;
-			5'b00_101: temp_row = 15'b001_001_000_000_000;
-			5'b00_110: temp_row = 15'b001_001_001_000_000;
-			5'b00_111: temp_row = 15'b001_001_001_001_000;
+			6'b000_000: temp_row = 15'b000_000_000_000_000;
+			6'b000_001: temp_row = 15'b000_000_000_000_000;
+			6'b000_010: temp_row = 15'b000_000_000_000_000;
+			6'b000_011: temp_row = 15'b000_000_000_000_000;
+			6'b000_100: temp_row = 15'b001_000_000_000_000;
+			6'b000_101: temp_row = 15'b001_001_000_000_000;
+			6'b000_110: temp_row = 15'b001_001_001_000_000;
+			6'b000_111: temp_row = 15'b001_001_001_001_000;
 
-			5'b01_000: temp_row = 15'b010_001_001_001_001;
-			5'b01_001: temp_row = 15'b010_001_001_001_001;
-			5'b01_010: temp_row = 15'b010_010_001_001_001;
-			5'b01_011: temp_row = 15'b010_010_001_001_001;
-			5'b01_100: temp_row = 15'b011_010_010_001_001;
-			5'b01_101: temp_row = 15'b011_010_010_001_001;
-			5'b01_110: temp_row = 15'b011_010_010_010_001;
-			5'b01_111: temp_row = 15'b011_011_010_010_001;
+			6'b001_000: temp_row = 15'b010_001_001_001_001;
+			6'b001_001: temp_row = 15'b010_001_001_001_001;
+			6'b001_010: temp_row = 15'b010_010_001_001_001;
+			6'b001_011: temp_row = 15'b010_010_001_001_001;
+			6'b001_100: temp_row = 15'b011_010_010_001_001;
+			6'b001_101: temp_row = 15'b011_010_010_001_001;
+			6'b001_110: temp_row = 15'b011_010_010_010_001;
+			6'b001_111: temp_row = 15'b011_011_010_010_001;
 
-			5'b10_000: temp_row = 15'bxxx_011_010_010_010;
-			5'b10_001: temp_row = 15'bxxx_011_010_010_010;
-			5'b10_010: temp_row = 15'bxxx_011_011_010_010;
-			5'b10_011: temp_row = 15'bxxx_011_011_010_010;
-			5'b10_100: temp_row = 15'bxxx_xxx_011_010_010;
-			5'b10_101: temp_row = 15'bxxx_xxx_011_011_010;
-			5'b10_110: temp_row = 15'bxxx_xxx_011_011_010;
-			5'b10_111: temp_row = 15'bxxx_xxx_011_011_010;
+			6'b010_000: temp_row = 15'bxxx_011_010_010_010;
+			6'b010_001: temp_row = 15'bxxx_011_010_010_010;
+			6'b010_010: temp_row = 15'bxxx_011_011_010_010;
+			6'b010_011: temp_row = 15'bxxx_011_011_010_010;
+			6'b010_100: temp_row = 15'bxxx_xxx_011_010_010;
+			6'b010_101: temp_row = 15'bxxx_xxx_011_011_010;
+			6'b010_110: temp_row = 15'bxxx_xxx_011_011_010;
+			6'b010_111: temp_row = 15'bxxx_xxx_011_011_010;
 
-			5'b11_000: temp_row = 15'bxxx_xxx_xxx_011_011;
-			5'b11_001: temp_row = 15'bxxx_xxx_xxx_011_011;
-			5'b11_010: temp_row = 15'bxxx_xxx_xxx_011_011;
-			5'b11_011: temp_row = 15'bxxx_xxx_xxx_011_011;
-			5'b11_100: temp_row = 15'bxxx_xxx_xxx_xxx_011;
-			5'b11_101: temp_row = 15'bxxx_xxx_xxx_xxx_011;
-			5'b11_110: temp_row = 15'bxxx_xxx_xxx_xxx_011;
-			5'b11_111: temp_row = 15'bxxx_xxx_xxx_xxx_011;
+			6'b011_000: temp_row = 15'bxxx_xxx_xxx_011_011;
+			6'b011_001: temp_row = 15'bxxx_xxx_xxx_011_011;
+			6'b011_010: temp_row = 15'bxxx_xxx_xxx_011_011;
+			6'b011_011: temp_row = 15'bxxx_xxx_xxx_011_011;
+			6'b011_100: temp_row = 15'bxxx_xxx_xxx_xxx_011;
+			6'b011_101: temp_row = 15'bxxx_xxx_xxx_xxx_011;
+			6'b011_110: temp_row = 15'bxxx_xxx_xxx_xxx_011;
+			6'b011_111: temp_row = 15'bxxx_xxx_xxx_xxx_011;
+			6'b100_000: temp_row = 15'bxxx_xxx_xxx_xxx_xxx;
 			default:   temp_row = 15'b000_000_000_000_000;
+		endcase
 	end
 
-	always @(d, temp_row) begin
-	case (d) 
+	always @(D, temp_row) begin
+	case (D) 
 		4'b0100 : q = temp_row[14:12];
 		4'b0101 : q = temp_row[11:9];
 		4'b0110 : q = temp_row[8:6];
@@ -201,10 +195,10 @@ module shift_reg(clk, resetn, q, shift, done, Q);
 	always @(posedge clk) begin
 		if (!resetn) begin
 			// reset
-			temp <= 9'b0;
+			temp <= 8'b00;
 		end
 		else begin
-			if (shift) temp <= {temp[5:2], q};
+			if (shift) temp <= {temp[5:0], q};
 		end
 	end
 
@@ -219,8 +213,8 @@ module product(d, q, qd);
 	output reg[9:0] qd;
 
 	//product
-	wire [9:0] q2d, q3d, 
-	wire [9:0] q_2d, q_3d;
+	wire [9:0] q2d, q3d;
+	//wire [9:0] q_2d, q_3d;
 
 
 	assign q2d  = d << 1;
