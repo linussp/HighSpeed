@@ -13,7 +13,7 @@ parameter IDLE   = 2'b00,
 
 reg [1:0] state, next_state;
 reg [7:0] count;  // in case we want to increase digit 
-reg doneq, shiftq, loadP;
+reg done, shiftq, loadP;
 
 wire [9:0] P, P4;
 wire [1:0] q; //from 1 time select table
@@ -21,7 +21,7 @@ wire [9:0] qd; //product
 wire [9:0] newP; //after sub
 wire [9:0] P_reg; //after register 
 
-
+assign R = done? newP:8'hz;
 
 always @(posedge clk) begin
 	if (!resetn) begin
@@ -30,14 +30,14 @@ always @(posedge clk) begin
 		count = 0;
 		loadP = 1'b0;
 		shiftq = 1'b0;
-		doneq = 1'b0;
+		done = 1'b0;
 	end
 	else begin
 		case(state)
 			IDLE: begin
 				loadP = 1'b0;
 				shiftq = 1'b0;
-				doneq = 1'b0;
+				done = 1'b0;
 				if(start) state = CALC_1;
 			end
 			CALC_1:begin
@@ -55,7 +55,7 @@ always @(posedge clk) begin
 			end
 			STOP: begin
 				shiftq = 1'b0;
-				doneq = 1'b1;
+				done = 1'b1;
 			end
 			default: state = IDLE;
 		endcase	
@@ -85,7 +85,7 @@ shift_reg qreg(
 	.resetn(resetn),
 	.q(q),
 	.shift(shiftq),
-	.done(doneq),
+	.done(done),
 	.Q(Q)
 	);
 
@@ -202,7 +202,7 @@ module shift_reg(clk, resetn, q, shift, done, Q);
 		end
 	end
 
-	assign Q = done? temp : 'hz;
+	assign Q = done? {0,temp[7:1]} : 'hz;
 
 endmodule
 
