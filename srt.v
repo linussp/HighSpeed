@@ -75,7 +75,7 @@ mux2 p1(
 //assign P4 = P << 2;
 
 q_select qst(
-	.D(D[7:4]),
+	.D(D[7:3]),
 	.P4(P4[9:4]),
 	.q(q)
 	);
@@ -123,7 +123,7 @@ endmodule
 
 //q selection table 
 module q_select(D, P4, q);
-input [3:0] D;
+input [4:0] D;
 input [5:0] P4; //6 msb P4[9:4]
 output reg[1:0] q;
 
@@ -174,15 +174,15 @@ reg [26:0] temp_row;
 
 	always @(D, temp_row) begin
 	case (D) 
-		4'b01000 : q = temp_row[26:24];
-		4'b01001 : q = temp_row[23:21];
-		4'b01010 : q = temp_row[20:18];
-		4'b01011 : q = temp_row[17:15];		
-		4'b01100 : q = temp_row[14:12];
-		4'b01101 : q = temp_row[11:9];
-		4'b01110 : q = temp_row[8:6];		
-		4'b01111 : q = temp_row[5:3];		
-		4'b10000 : q = temp_row[2:0];		
+		5'b01000 : q = temp_row[26:24];
+		5'b01001 : q = temp_row[23:21];
+		5'b01010 : q = temp_row[20:18];
+		5'b01011 : q = temp_row[17:15];		
+		5'b01100 : q = temp_row[14:12];
+		5'b01101 : q = temp_row[11:9];
+		5'b01110 : q = temp_row[8:6];		
+		5'b01111 : q = temp_row[5:3];		
+		5'b10000 : q = temp_row[2:0];		
 	endcase
 	end
 endmodule
@@ -258,7 +258,7 @@ output reg[9:0] data_out;
 always @(posedge clk)begin
 	if (!resetn) data_out <= 10'b0;
 	else begin
-		if(load) data_out <= in;
+		if(load) data_out <= in << 2;
 	end
 end
 
