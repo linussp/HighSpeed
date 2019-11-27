@@ -50,7 +50,7 @@ always @(posedge clk) begin
 				count = count + 1;
 				shiftq = 1'b1;
 
-				if (count == 8'h04) state = STOP;
+				if (count == 8'h05) state = STOP;
 				else state = CALC_2; 
 			end
 			STOP: begin
@@ -68,11 +68,11 @@ mux2 p1(
 	.input0({2'b00,N}),  // not sure 3'b000 or should be 2'b00
 	.input1(P_reg),
 	.select(loadP),
-	.data_out(P)
+	.data_out(P4)
 	);
 
 //P to 4P
-assign P4 = P << 2;
+//assign P4 = P << 2;
 
 q_select qst(
 	.D(D[7:4]),
@@ -194,7 +194,7 @@ module shift_reg(clk, resetn, q, shift, done, Q);
 	input shift, done;
 	output [7:0] Q;
 
-	reg [7:0] temp;
+	reg [9:0] temp;
 
 	always @(posedge clk) begin
 		if (!resetn) begin
@@ -202,11 +202,11 @@ module shift_reg(clk, resetn, q, shift, done, Q);
 			temp <= 8'b00;
 		end
 		else begin
-			if (shift) temp <= {temp[5:0], q};
+			if (shift) temp <= {temp[7:0], q};
 		end
 	end
 
-	assign Q = done? {0,temp[7:1]} : 'hz;
+	assign Q = done? temp[8:1] : 'hz;
 
 endmodule
 
