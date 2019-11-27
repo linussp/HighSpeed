@@ -1,5 +1,5 @@
 module srt(
-	input clk, resetn, start,
+	input clk, resetn, enable,
 	input [7:0] N,
 	input [7:0] D,
 	output [7:0] Q,
@@ -38,7 +38,7 @@ always @(posedge clk) begin
 				loadP = 1'b0;
 				shiftq = 1'b0;
 				done = 1'b0;
-				if(start) state = CALC_1;
+				if(enable) state = CALC_1;
 			end
 			CALC_1:begin
 				count = count + 1;
