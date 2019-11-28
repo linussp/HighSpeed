@@ -3,7 +3,8 @@ module srt(
 	input [7:0] N,
 	input [7:0] D,
 	output [7:0] Q,
-	output [7:0] R
+	output [7:0] R,
+	output done
 );
 
 parameter IDLE   = 2'b00,
