@@ -20,7 +20,13 @@ resetn = 1;
 	N = 8'b0011_0000;
 	D = 8'b0100_0000;
 	
-#2000 $stop;
+#200 resetn = 0;
+#20  resetn = 1;
+#10  enable = 1;
+	N = 8'b0111_0000;
+	D = 8'b0100_0000;
+
+#200 $stop;
 end
 
 always 

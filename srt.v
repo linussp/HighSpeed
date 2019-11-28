@@ -4,7 +4,7 @@ module srt(
 	input [7:0] D,
 	output [7:0] Q,
 	output [7:0] R,
-	output done
+	output reg done
 );
 
 parameter IDLE   = 2'b00,
@@ -14,7 +14,7 @@ parameter IDLE   = 2'b00,
 
 reg [1:0] state, next_state;
 reg [7:0] count;  // in case we want to increase digit 
-reg done, shiftq, loadP;
+reg shiftq, loadP;
 
 wire [9:0] P, P4;
 wire [1:0] q; //from 1 time select table
