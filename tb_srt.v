@@ -19,8 +19,8 @@ resetn = 1;
 #5  resetn = 0;
 #20 resetn = 1;
 #10 enable = 1;
-	N = 8'h40;
-	D = 6'h10;
+	N = 8'h44;
+	D = 6'h17;
 	
 /*#200 resetn = 0;
 #20  resetn = 1;

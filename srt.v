@@ -106,7 +106,7 @@ register9 m4(
 	.clk(clk),
 	.resetn(resetn),
 	.in(newP),
-	.load(1'b1),
+	.load(~done),
 	.data_out(P_reg)
 	);
 
